@@ -104,6 +104,8 @@ export interface SimpleFlowNode {
   buttonsSetting?: any[]
   // 表单权限
   fieldsPermission?: Array<Record<string, any>>
+  // 表单字段必填（字段名数组，仅对可编辑字段生效）
+  fieldsRequired?: string[]
   // 审批任务超时处理
   timeoutHandler?: TimeoutHandler
   // 审批任务拒绝处理
@@ -280,7 +282,11 @@ export enum BpmHttpRequestParamTypeEnum {
   /**
    * 表单
    */
-  FROM_FORM = 2
+  FROM_FORM = 2,
+  /**
+   * 业务字段
+   */
+  FROM_BUSINESS = 3
 }
 export const BPM_HTTP_REQUEST_PARAM_TYPES = [
   {
@@ -290,6 +296,10 @@ export const BPM_HTTP_REQUEST_PARAM_TYPES = [
   {
     value: 2,
     label: '表单'
+  },
+  {
+    value: 3,
+    label: '业务字段'
   }
 ]
 

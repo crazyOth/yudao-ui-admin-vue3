@@ -67,6 +67,12 @@ const props = defineProps({
   startDeptIds: {
     type: Array,
     required: false
+  },
+  // 实体表单（业务表单）的字段。用于监听器的「业务字段」参数
+  entityFormFields: {
+    type: Array as () => Array<{ field: string; label: string }>,
+    required: false,
+    default: () => []
   }
 })
 
@@ -74,6 +80,16 @@ const processData = inject('processData') as Ref
 const loading = ref(false)
 const formFields = ref<string[]>([])
 const formType = ref(props.modelFormType)
+const entityFormFields = ref<Array<{ field: string; label: string }>>([])
+
+// 监听 entityFormFields 变化
+watch(
+  () => props.entityFormFields,
+  (newVal) => {
+    entityFormFields.value = newVal ?? []
+  },
+  { immediate: true }
+)
 
 // 监听 modelFormType 变化
 watch(
@@ -107,6 +123,7 @@ const userGroupOptions = ref<UserGroupApi.UserGroupVO[]>([]) // 用户组列表
 
 provide('formFields', formFields)
 provide('formType', formType)
+provide('entityFormFields', entityFormFields)
 provide('roleList', roleOptions)
 provide('postList', postOptions)
 provide('userList', userOptions)

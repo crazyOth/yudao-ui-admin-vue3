@@ -19,6 +19,7 @@
       :model-form-type="modelData.formType"
       :start-user-ids="modelData.startUserIds"
       :start-dept-ids="modelData.startDeptIds"
+      :entity-form-fields="entityFormFields"
       @success="handleDesignSuccess"
     />
   </template>
@@ -28,6 +29,11 @@
 import { BpmModelType } from '@/utils/constants'
 import BpmModelEditor from './editor/index.vue'
 import SimpleModelDesign from '../../simple/SimpleModelDesign.vue'
+
+defineProps<{
+  // 实体表单（业务表单）的字段。用于流程设计器监听器的「业务字段」参数
+  entityFormFields?: Array<{ field: string; label: string }>
+}>()
 
 // 创建本地数据副本
 const modelData = defineModel<any>()

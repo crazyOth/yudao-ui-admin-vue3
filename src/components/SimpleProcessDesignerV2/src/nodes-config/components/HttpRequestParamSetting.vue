@@ -52,6 +52,10 @@
             v-if="item.type === BpmHttpRequestParamTypeEnum.FROM_FORM"
             v-model="item.value"
             style="width: 200px"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入流程变量名"
           >
             <el-option
               v-for="(field, fIdx) in formFieldOptions"
@@ -59,6 +63,28 @@
               :label="field.title"
               :value="field.field"
               :disabled="!field.required"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          :prop="`${bind}.header.${index}.value`"
+          :rules="{
+            required: true,
+            message: '参数值不能为空',
+            trigger: 'change'
+          }"
+        >
+          <el-select
+            v-if="item.type === BpmHttpRequestParamTypeEnum.FROM_BUSINESS"
+            v-model="item.value"
+            style="width: 200px"
+            placeholder="选择业务字段"
+          >
+            <el-option
+              v-for="field in entityFormFields"
+              :key="field.field"
+              :label="field.label"
+              :value="field.field"
             />
           </el-select>
         </el-form-item>
@@ -82,7 +108,27 @@
             trigger: 'blur'
           }"
         >
-          <el-input v-model="item.key" style="width: 160px" />
+          <!-- 业务字段行的参数名，支持从目标表单字段中选择（例如说 草稿流程的目标实体表单字段） -->
+          <el-select
+            v-if="
+              item.type === BpmHttpRequestParamTypeEnum.FROM_BUSINESS &&
+              businessKeyOptions.length > 0
+            "
+            v-model="item.key"
+            style="width: 160px"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入目标表单字段"
+          >
+            <el-option
+              v-for="field in businessKeyOptions"
+              :key="field.field"
+              :label="field.label"
+              :value="field.field"
+            />
+          </el-select>
+          <el-input v-else v-model="item.key" style="width: 160px" />
         </el-form-item>
       </div>
       <div class="mr-2">
@@ -124,6 +170,10 @@
             v-if="item.type === BpmHttpRequestParamTypeEnum.FROM_FORM"
             v-model="item.value"
             style="width: 200px"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="选择或输入流程变量名"
           >
             <el-option
               v-for="(field, fIdx) in formFieldOptions"
@@ -131,6 +181,28 @@
               :label="field.title"
               :value="field.field"
               :disabled="!field.required"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          :prop="`${bind}.body.${index}.value`"
+          :rules="{
+            required: true,
+            message: '参数值不能为空',
+            trigger: 'change'
+          }"
+        >
+          <el-select
+            v-if="item.type === BpmHttpRequestParamTypeEnum.FROM_BUSINESS"
+            v-model="item.value"
+            style="width: 200px"
+            placeholder="选择业务字段"
+          >
+            <el-option
+              v-for="field in entityFormFields"
+              :key="field.field"
+              :label="field.label"
+              :value="field.field"
             />
           </el-select>
         </el-form-item>
@@ -150,7 +222,7 @@ import {
   BPM_HTTP_REQUEST_PARAM_TYPES,
   BpmHttpRequestParamTypeEnum
 } from '../../consts'
-import { useFormFieldsAndStartUser } from '../../node'
+import { useFormFieldsAndStartUser, useEntityFormFields } from '../../node'
 defineOptions({
   name: 'HttpRequestParamSetting'
 })
@@ -169,11 +241,20 @@ const props = defineProps({
   bind: {
     type: String,
     required: true
+  },
+  // 请求体「业务字段」行的参数名选项。例如说 草稿预设下，目标流程的实体表单字段
+  businessKeyOptions: {
+    type: Array as () => Array<{ field: string; label: string }>,
+    required: false,
+    default: () => []
   }
 })
 
 // 流程表单字段，发起人字段
 const formFieldOptions = useFormFieldsAndStartUser()
+
+// 实体表单（业务表单）字段
+const entityFormFields = useEntityFormFields()
 
 /** 监听类型变化，清空值 */
 const handleTypeChange = (item: HttpRequestParam) => {

@@ -67,7 +67,11 @@ import ReceivableList from '@/views/crm/receivable/components/ReceivableList.vue
 import ReceivablePlanList from '@/views/crm/receivable/plan/components/ReceivablePlanList.vue'
 
 defineOptions({ name: 'CrmContractDetail' })
-const props = defineProps<{ id?: number }>()
+const props = defineProps<{
+  id?: number
+  // 表单字段必填（字段名数组）。审批详情页统一透传给业务表单；合同表单暂不消费，声明以吸收该属性
+  fieldRequired?: string[]
+}>()
 
 const route = useRoute()
 const message = useMessage()

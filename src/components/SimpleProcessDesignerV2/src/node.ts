@@ -120,6 +120,17 @@ export function useFormFields() {
 
 // TODO @芋艿：后续需要把各种类似 useFormFieldsPermission 的逻辑，抽成一个通用方法。
 /**
+ * @description 获取实体表单（业务表单）的字段，用于监听器的「业务字段」参数
+ */
+export function useEntityFormFields() {
+  const entityFormFields = inject<Ref<Array<{ field: string; label: string }>>>(
+    'entityFormFields',
+    ref([])
+  )
+  return unref(entityFormFields)
+}
+
+/**
  * @description 获取流程表单的字段和发起人字段
  */
 export function useFormFieldsAndStartUser() {

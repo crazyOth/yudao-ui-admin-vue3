@@ -9,6 +9,19 @@ export type ProcessDefinitionVO = {
   formCustomCreatePath?: string
 }
 
+export type EntityFormFieldVO = {
+  field: string
+  label: string
+}
+
+export type EntityFormVO = {
+  key: string
+  name: string
+  fields: EntityFormFieldVO[]
+  createRoute?: string
+  viewRoute?: string
+}
+
 export type ModelVO = {
   id: number
   formName: string
@@ -20,6 +33,7 @@ export type ModelVO = {
   formId: number
   formCustomCreatePath: string
   formCustomViewPath: string
+  entityFormKey?: string
   processDefinition: ProcessDefinitionVO
   status: number
   remark: string
@@ -64,6 +78,11 @@ export const updateModelState = async (id: number, state: number) => {
 
 export const createModel = async (data: ModelVO) => {
   return await request.post({ url: '/bpm/model/create', data: data })
+}
+
+// 获得实体表单列表。用于表单设计的「实体表单」下拉，以及流程设计器监听器的「业务字段」参数
+export const getEntityFormList = async () => {
+  return await request.get({ url: '/bpm/model/entity-form-list' })
 }
 
 export const importModel = async (file: File, key?: string, name?: string) => {

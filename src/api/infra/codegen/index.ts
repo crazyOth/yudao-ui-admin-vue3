@@ -29,6 +29,7 @@ export type CodegenTableSaveReqVO = CodegenTableVO & {
   subJoinMany?: boolean
   treeParentColumnId?: number
   treeNameColumnId?: number
+  bpmEntityForm?: boolean
 }
 
 export const createEmptyCodegenTableSaveReqVO = (): CodegenTableSaveReqVO => ({
@@ -56,7 +57,8 @@ export const createEmptyCodegenTableSaveReqVO = (): CodegenTableSaveReqVO => ({
   subJoinColumnId: undefined,
   subJoinMany: undefined,
   treeParentColumnId: undefined,
-  treeNameColumnId: undefined
+  treeNameColumnId: undefined,
+  bpmEntityForm: false
 })
 
 export type CodegenColumnVO = {

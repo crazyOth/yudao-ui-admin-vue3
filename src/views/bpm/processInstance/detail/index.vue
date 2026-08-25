@@ -60,9 +60,14 @@
                           :rule="detailForm.rule"
                         />
                       </div>
-                      <!-- 情况二：业务表单 -->
+                      <!-- 情况二：业务表单。fieldPermissions：当前节点的表单字段权限（可编辑/只读/隐藏） -->
                       <div v-if="processDefinition?.formType === BpmModelFormType.CUSTOM">
-                        <BusinessFormComponent :id="processInstance.businessKey" />
+                        <BusinessFormComponent
+                          ref="businessFormRef"
+                          :id="processInstance.businessKey"
+                          :field-permissions="formFieldsPermissionMap"
+                          :field-required="formFieldsRequired"
+                        />
                       </div>
                     </div>
                   </el-col>
@@ -128,6 +133,7 @@
             :normal-form="detailForm"
             :normal-form-api="fApi"
             :writable-fields="writableFields"
+            :before-audit="saveBusinessFormBeforeAudit"
             @success="refresh"
           />
         </div>
@@ -172,6 +178,23 @@ const processInstanceLoading = ref(false) // 流程实例的加载中
 const processInstance = ref<any>({}) // 流程实例
 const processDefinition = ref<any>({}) // 流程定义
 const processModelView = ref<any>({}) // 流程模型视图
+const formFieldsPermissionMap = ref<Record<string, string> | null>(null) // 表单字段权限（当前节点配置，给业务表单页用）
+const formFieldsRequired = ref<string[] | null>(null) // 表单字段必填（当前节点配置，给业务表单页用）
+const businessFormRef = ref() // 业务表单组件引用
+/** 业务表单（实体表单）：审批前，若当前节点配置了可编辑字段，先保存修改（对齐流程表单可编辑字段随审批保存的行为）
+ * 返回 false：业务表单保存校验不通过（组件自身已提示），中断审批 */
+const saveBusinessFormBeforeAudit = async (): Promise<boolean | void> => {
+  if (processDefinition.value?.formType !== BpmModelFormType.CUSTOM) {
+    return
+  }
+  const hasWritableField = Object.values(formFieldsPermissionMap.value || {}).some(
+    (permission) => permission === FieldPermissionType.WRITE
+  )
+  if (!hasWritableField) {
+    return
+  }
+  return await businessFormRef.value?.save?.()
+}
 const operationButtonRef = ref() // 操作按钮组件 ref
 const commentListRef = ref() // 评论列表组件 ref
 const auditIconsMap = {
@@ -222,6 +245,8 @@ const getApprovalDetail = async () => {
     }
     processInstance.value = data.processInstance
     processDefinition.value = data.processDefinition
+    formFieldsPermissionMap.value = data.formFieldsPermission ?? null
+    formFieldsRequired.value = data.formFieldsRequired ?? null
 
     // 设置表单信息
     if (processDefinition.value.formType === BpmModelFormType.NORMAL) {

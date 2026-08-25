@@ -69,11 +69,21 @@
 
         <!-- 第二步：表单设计 -->
         <div v-if="currentStep === 1" class="mx-auto w-560px">
-          <FormDesign v-model="formData" :formList="formList" ref="formDesignRef" />
+          <FormDesign
+            v-model="formData"
+            :formList="formList"
+            :entityFormList="entityFormList"
+            ref="formDesignRef"
+          />
         </div>
 
         <!-- 第三步：流程设计 -->
-        <ProcessDesign v-if="currentStep === 2" v-model="formData" ref="processDesignRef" />
+        <ProcessDesign
+          v-if="currentStep === 2"
+          v-model="formData"
+          :entity-form-fields="entityFormFields"
+          ref="processDesignRef"
+        />
 
         <!-- 第四步：更多设置 -->
         <div v-show="currentStep === 3" class="mx-auto w-700px">
@@ -151,6 +161,7 @@ const formData: any = ref({
   formId: '',
   formCustomCreatePath: '',
   formCustomViewPath: '',
+  entityFormKey: undefined,
   visible: true,
   startUserType: undefined,
   startUserIds: [],
@@ -187,6 +198,15 @@ provide('modelData', formData)
 
 // 数据列表
 const formList = ref([])
+const entityFormList = ref<ModelApi.EntityFormVO[]>([])
+
+// 实体表单的字段。用于流程设计器监听器的「业务字段」参数
+const entityFormFields = computed(() => {
+  const entityForm = entityFormList.value.find(
+    (form) => form.key === formData.value.entityFormKey
+  )
+  return entityForm?.fields ?? []
+})
 const categoryList = ref<CategoryVO[]>([])
 const userList = ref<UserApi.UserVO[]>([])
 const deptList = ref<DeptApi.DeptVO[]>([])
@@ -241,6 +261,8 @@ const initData = async () => {
 
   // 获取表单列表
   formList.value = await FormApi.getFormSimpleList()
+  // 获取实体表单列表
+  entityFormList.value = await ModelApi.getEntityFormList()
   // 获取分类列表
   categoryList.value = await CategoryApi.getCategorySimpleList()
   // 获取用户列表

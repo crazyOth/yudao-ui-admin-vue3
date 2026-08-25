@@ -5,6 +5,7 @@
       :model-form-type="modelFormType"
       :start-user-ids="startUserIds"
       :start-dept-ids="startDeptIds"
+      :entity-form-fields="entityFormFields"
       @success="handleSuccess"
       ref="designerRef"
     />
@@ -23,6 +24,8 @@ defineProps<{
   modelFormType?: number
   startUserIds?: number[]
   startDeptIds?: number[]
+  // 实体表单（业务表单）的字段。用于流程设计器监听器的「业务字段」参数
+  entityFormFields?: Array<{ field: string; label: string }>
 }>()
 
 const emit = defineEmits(['success'])

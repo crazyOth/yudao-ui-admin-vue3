@@ -148,6 +148,23 @@
         </el-form-item>
       </el-col>
 
+      <el-col :span="12">
+        <el-form-item prop="bpmEntityForm">
+          <template #label>
+            <span>
+              BPM 实体表单
+              <el-tooltip
+                content="勾选后，生成的 ServiceImpl 自动实现 BpmEntityFormApi 接口，可在流程模型的「表单设计-实体表单」中被选择，业务字段可用于监听器参数映射。注意：生成代码的模块 pom 需要依赖 yudao-module-bpm"
+                placement="top"
+              >
+                <Icon icon="ep:question-filled" />
+              </el-tooltip>
+            </span>
+          </template>
+          <el-switch v-model="formData.bpmEntityForm" />
+        </el-form-item>
+      </el-col>
+
       <el-col v-if="formData.genType === '1'" :span="24">
         <el-form-item prop="genPath">
           <template #label>

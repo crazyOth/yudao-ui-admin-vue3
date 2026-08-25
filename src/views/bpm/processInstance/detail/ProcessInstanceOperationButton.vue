@@ -609,6 +609,7 @@ const props = defineProps<{
   normalForm: any // 流程表单 formCreate
   normalFormApi: any // 流程表单 formCreate Api
   writableFields: string[] // 流程表单可以编辑的字段
+  beforeAudit?: () => Promise<boolean | void> // 审批前钩子（如业务表单的可编辑字段自动保存）；返回 false 或抛错则不执行审批
 }>()
 
 const formLoading = ref(false) // 表单加载中
@@ -925,6 +926,16 @@ const handleAudit = async (pass: boolean, formRef: FormInstance | undefined) => 
     }
 
     if (pass) {
+      // 审批前钩子（如业务表单的可编辑字段自动保存）；返回 false（校验不通过，表单已提示）或抛错，则不执行审批
+      if (props.beforeAudit) {
+        try {
+          const ok = await props.beforeAudit()
+          if (ok === false) return
+        } catch {
+          message.error('表单保存失败，已取消审批，请重试')
+          return
+        }
+      }
       // 等待 onChange 触发的最新一轮重算落地，避免拿旧分支节点 + 旧审批人选择 + 新表单变量的错配组合提交
       if (pendingNextNodesTask) {
         await pendingNextNodesTask

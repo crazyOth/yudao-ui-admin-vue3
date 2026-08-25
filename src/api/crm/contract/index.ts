@@ -66,10 +66,11 @@ export const getContract = async (id: number) => {
   return await request.get({ url: `/crm/contract/get?id=` + id })
 }
 
-// 查询 CRM 合同下拉列表
-export const getContractSimpleList = async (customerId: number) => {
+// 查询 CRM 合同下拉列表（customerId 可选：不传则返回当前用户可见的全部合同）
+export const getContractSimpleList = async (customerId?: number) => {
   return await request.get({
-    url: `/crm/contract/simple-list?customerId=${customerId}`
+    url: `/crm/contract/simple-list`,
+    params: { customerId }
   })
 }
 

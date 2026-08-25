@@ -98,15 +98,40 @@
       cursor: text;
     }
 
+    // 控件块（仅审批节点有：单选组 + 必填勾选）。与表头同为「label + 右侧块」两子项结构
+    .field-setting-item-controls {
+      display: flex;
+    }
+
+    // 注意：发起节点/抄送节点的 DOM 没有 controls 包裹层，宽度规则必须直接挂在 group 上才能同时匹配三种节点
     .field-setting-item-group {
       display: flex;
       justify-content: space-between;
+      // Element Plus 的 el-radio-group 默认 flex-wrap: wrap，空间不足时单选钮会换行、与表头错位
+      flex-wrap: nowrap;
 
       .item-radio-wrap {
         display: inline-block;
         width: 110px;
         text-align: center;
       }
+    }
+
+    .item-required-wrap {
+      display: inline-block;
+      width: 110px;
+      text-align: center;
+    }
+  }
+
+  // 显示「必填」列时 5 列共 550px，超出抽屉可用宽度（526px）会被压缩换行、表头与控件错位；
+  // 此状态下所有列统一收窄到 104px（5×104=520 ≤ 526），无必填列时保持原 110px 样式不变
+  &.with-required-column {
+    .setting-title-label,
+    .field-setting-item-label,
+    .item-radio-wrap,
+    .item-required-wrap {
+      width: 104px;
     }
   }
 }

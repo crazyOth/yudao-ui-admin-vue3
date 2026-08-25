@@ -355,6 +355,28 @@ const remainingRouter: AppRouteRecordRaw[] = [
     ]
   },
   {
+    path: '/task', // 任务管理（流程业务表单，路由 name 避开动态菜单的 'task'）
+    component: Layout,
+    name: 'taskProcessForm',
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: 'main/create-process',
+        component: () => import('@/views/task/main/TaskMainCreateProcess.vue'),
+        name: 'TaskMainCreateProcess',
+        meta: {
+          noCache: true,
+          hidden: true,
+          canTo: true,
+          title: '新建任务（发起审批）',
+          activeMenu: '/task/main'
+        }
+      }
+    ]
+  },
+  {
     path: '/mall/product', // 商品中心
     component: Layout,
     name: 'ProductCenter',

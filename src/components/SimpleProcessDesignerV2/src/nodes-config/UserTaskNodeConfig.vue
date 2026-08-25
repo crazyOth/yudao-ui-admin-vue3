@@ -454,8 +454,8 @@
           </div>
         </div>
       </el-tab-pane>
-      <el-tab-pane label="表单字段权限" name="fields" v-if="formType === 10">
-        <div class="field-setting-pane">
+      <el-tab-pane label="表单字段权限" name="fields" v-if="showFieldsTab">
+        <div :class="['field-setting-pane', { 'with-required-column': showRequiredColumn }]">
           <div class="field-setting-desc">字段权限</div>
           <div class="field-permit-title">
             <div class="setting-title-label first-title"> 字段名称 </div>
@@ -469,6 +469,7 @@
               <span class="setting-title-label cursor-pointer" @click="updatePermission('NONE')">
                 隐藏
               </span>
+              <span v-if="showRequiredColumn" class="setting-title-label">必填</span>
             </div>
           </div>
           <div
@@ -477,35 +478,49 @@
             :key="index"
           >
             <div class="field-setting-item-label"> {{ item.title }} </div>
-            <el-radio-group class="field-setting-item-group" v-model="item.permission">
-              <div class="item-radio-wrap">
-                <el-radio
-                  :value="FieldPermissionType.READ"
-                  size="large"
-                  :label="FieldPermissionType.READ"
-                >
-                  <span></span>
-                </el-radio>
+            <!-- 与表头（字段名称 + 一个右侧标题块）保持相同的两子项结构，列才能对齐 -->
+            <div class="field-setting-item-controls">
+              <el-radio-group
+                class="field-setting-item-group"
+                v-model="item.permission"
+                @change="onFieldsPermissionChange(item)"
+              >
+                <div class="item-radio-wrap">
+                  <el-radio
+                    :value="FieldPermissionType.READ"
+                    size="large"
+                    :label="FieldPermissionType.READ"
+                  >
+                    <span></span>
+                  </el-radio>
+                </div>
+                <div class="item-radio-wrap">
+                  <el-radio
+                    :value="FieldPermissionType.WRITE"
+                    size="large"
+                    :label="FieldPermissionType.WRITE"
+                  >
+                    <span></span>
+                  </el-radio>
+                </div>
+                <div class="item-radio-wrap">
+                  <el-radio
+                    :value="FieldPermissionType.NONE"
+                    size="large"
+                    :label="FieldPermissionType.NONE"
+                  >
+                    <span></span>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+              <div v-if="showRequiredColumn" class="item-required-wrap">
+                <!-- 必填仅对可编辑字段生效 -->
+                <el-checkbox
+                  v-model="item.required"
+                  :disabled="item.permission !== FieldPermissionType.WRITE"
+                ></el-checkbox>
               </div>
-              <div class="item-radio-wrap">
-                <el-radio
-                  :value="FieldPermissionType.WRITE"
-                  size="large"
-                  :label="FieldPermissionType.WRITE"
-                >
-                  <span></span>
-                </el-radio>
-              </div>
-              <div class="item-radio-wrap">
-                <el-radio
-                  :value="FieldPermissionType.NONE"
-                  size="large"
-                  :label="FieldPermissionType.NONE"
-                >
-                  <span></span>
-                </el-radio>
-              </div>
-            </el-radio-group>
+            </div>
           </div>
         </div>
       </el-tab-pane>
@@ -559,10 +574,12 @@ import {
   useWatchNode,
   useNodeName,
   useFormFieldsPermission,
+  useEntityFormFields,
   useNodeForm,
   UserTaskFormType,
   useDrawer
 } from '../node'
+import { BpmModelFormType } from '@/utils/constants'
 import { defaultProps } from '@/utils/tree'
 import { cloneDeep } from 'lodash-es'
 import { convertTimeUnit, getApproveTypeText } from '../utils'
@@ -601,6 +618,41 @@ const activeTabName = ref('user')
 // 表单字段权限设置
 const { formType, fieldsPermissionConfig, formFieldOptions, getNodeConfigFormFields } =
   useFormFieldsPermission(FieldPermissionType.READ)
+// 实体表单（业务表单）的字段。业务表单类型的模型，「表单字段权限」页签按它的字段配置
+const entityFormFields = useEntityFormFields()
+// 「表单字段权限」页签是否显示：流程表单；或业务表单（配了实体表单字段）
+const showFieldsTab = computed(
+  () =>
+    formType.value === BpmModelFormType.NORMAL ||
+    (formType.value === BpmModelFormType.CUSTOM && entityFormFields.length > 0)
+)
+// 「必填」列是否显示：仅实体表单（业务表单）模型。流程表单不校验节点级必填
+const showRequiredColumn = computed(
+  () => formType.value === BpmModelFormType.CUSTOM && entityFormFields.length > 0
+)
+
+/** 字段权限变更：权限不是可编辑时，自动取消「必填」（必填只对可编辑字段生效） */
+const onFieldsPermissionChange = (item: Record<string, any>) => {
+  if (item.permission !== FieldPermissionType.WRITE) {
+    item.required = false
+  }
+}
+
+/** 加载业务表单（实体表单）节点的「表单字段权限」配置。按实体表单字段合并（title 取字段的 label） */
+const getNodeConfigEntityFormFields = (
+  nodeFormFields?: Array<Record<string, string>>,
+  nodeFieldsRequired?: string[]
+) => {
+  fieldsPermissionConfig.value = entityFormFields.map((item) => {
+    const found = nodeFormFields?.find((fieldPermission) => fieldPermission.field === item.field)
+    return {
+      field: item.field,
+      title: item.label,
+      permission: found ? found.permission : FieldPermissionType.READ,
+      required: nodeFieldsRequired?.includes(item.field) ?? false
+    }
+  })
+}
 // 表单内用户字段选项, 必须是必填和用户选择器
 const userFieldOnFormOptions = computed(() => {
   // 固定添加发起人 ID 字段
@@ -750,8 +802,12 @@ const saveConfig = async () => {
   }
   // 设置审批人与发起人相同时
   currentNode.value.assignStartUserHandlerType = configForm.value.assignStartUserHandlerType
-  // 设置表单权限
-  currentNode.value.fieldsPermission = fieldsPermissionConfig.value
+  // 设置表单权限（去掉设计器专用的 required 属性，后端只存 field、title、permission）
+  currentNode.value.fieldsPermission = fieldsPermissionConfig.value.map(({ required, ...rest }) => rest)
+  // 设置表单字段必填（仅实体表单：可编辑且勾选必填的字段名）
+  currentNode.value.fieldsRequired = showRequiredColumn.value
+    ? fieldsPermissionConfig.value.filter((item) => item.required).map((item) => item.field)
+    : undefined
   // 设置按钮权限
   currentNode.value.buttonsSetting = buttonsSetting.value
   // 创建任务监听器
@@ -834,8 +890,12 @@ const showUserTaskNodeConfig = (node: SimpleFlowNode) => {
     (node.type === NodeType.TRANSACTOR_NODE
       ? TRANSACTOR_DEFAULT_BUTTON_SETTING
       : DEFAULT_BUTTON_SETTING)
-  // 4. 表单字段权限配置
-  getNodeConfigFormFields(node.fieldsPermission)
+  // 4. 表单字段权限配置。业务表单（实体表单）按实体表单字段加载，流程表单按表单字段加载
+  if (formType.value === BpmModelFormType.CUSTOM) {
+    getNodeConfigEntityFormFields(node.fieldsPermission, node.fieldsRequired)
+  } else {
+    getNodeConfigFormFields(node.fieldsPermission)
+  }
   // 5. 监听器
   // 5.1 创建任务
   configForm.value.taskCreateListenerEnable = node.taskCreateListener?.enable
@@ -973,15 +1033,19 @@ function useTimeoutHandler() {
   }
 }
 
-/** 批量更新权限 */
+/** 批量更新权限。必填只对可编辑字段生效：批量设为非可编辑时，同步清除必填 */
 const updatePermission = (type: string) => {
+  const isWritable = type === 'WRITE'
   fieldsPermissionConfig.value.forEach((field) => {
     field.permission =
       type === 'READ'
         ? FieldPermissionType.READ
-        : type === 'WRITE'
+        : isWritable
           ? FieldPermissionType.WRITE
           : FieldPermissionType.NONE
+    if (!isWritable) {
+      field.required = false
+    }
   })
 }
 </script>

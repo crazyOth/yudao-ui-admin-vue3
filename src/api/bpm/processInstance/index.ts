@@ -114,3 +114,39 @@ export const getProcessInstanceBpmnModelView = async (id: string) => {
 export const getProcessInstancePrintData = async (id: string) => {
   return await request.get({ url: '/bpm/process-instance/get-print-data?processInstanceId=' + id })
 }
+
+// ==================== 流程实例草稿 ====================
+
+export interface ProcessDraftVO {
+  id: number
+  processDefinitionKey: string
+  processDefinitionName?: string
+  formCustomCreatePath?: string // 业务表单的提交地址（有值时，提交草稿 = 跳转该地址填写业务表单）
+  name: string
+  businessKey?: string
+  variables?: Record<string, any> // 业务表单预填数据
+  status: number
+  processInstanceId?: string
+  submitTime?: string
+  createTime: string
+}
+
+// 获得我待提交草稿的分页
+export const getProcessDraftMyPage = async (params: any) => {
+  return await request.get({ url: '/bpm/process-draft/my-page', params })
+}
+
+// 获得草稿详情（本人，用于业务表单预填）
+export const getProcessDraft = async (id: number) => {
+  return await request.get({ url: '/bpm/process-draft/get?id=' + id })
+}
+
+// 提交草稿（发起流程），返回流程实例编号
+export const submitProcessDraft = async (id: number) => {
+  return await request.put({ url: `/bpm/process-draft/submit?id=${id}` })
+}
+
+// 删除草稿
+export const deleteProcessDraft = async (id: number) => {
+  return await request.delete({ url: `/bpm/process-draft/delete?id=${id}` })
+}

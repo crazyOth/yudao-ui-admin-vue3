@@ -22,6 +22,33 @@
     </el-form-item>
     <el-form-item
       v-if="modelData.formType === BpmModelFormType.CUSTOM"
+      label="实体表单"
+      prop="entityFormKey"
+    >
+      <el-select
+        v-model="modelData.entityFormKey"
+        clearable
+        placeholder="选择业务实体表单（可选）"
+        style="width: 330px"
+      >
+        <el-option
+          v-for="form in entityFormList"
+          :key="form.key"
+          :label="form.name"
+          :value="form.key"
+        />
+      </el-select>
+      <el-tooltip
+        class="item"
+        content="选择业务模块注册的实体表单后，自动回填下方提交/查看路由（实体表单未声明的路由会被清空，仍可手工填写），且流程设计器监听器可选择该表单的「业务字段」做参数映射"
+        effect="light"
+        placement="top"
+      >
+        <Icon icon="ep:question" class="ml-5px" />
+      </el-tooltip>
+    </el-form-item>
+    <el-form-item
+      v-if="modelData.formType === BpmModelFormType.CUSTOM"
       label="表单提交路由"
       prop="formCustomCreatePath"
     >
@@ -83,12 +110,14 @@
 <script lang="ts" setup>
 import { DICT_TYPE, getIntDictOptions } from '@/utils/dict'
 import * as FormApi from '@/api/bpm/form'
+import type { EntityFormVO } from '@/api/bpm/model'
 import { setConfAndFields2 } from '@/utils/formCreate'
 import { BpmModelFormType } from '@/utils/constants'
 import type { Rule } from '@form-create/element-ui'
 
-defineProps<{
+const props = defineProps<{
   formList: FormApi.FormVO[]
+  entityFormList: EntityFormVO[]
 }>()
 
 const formRef = ref()
@@ -125,12 +154,45 @@ watch(
   { immediate: true }
 )
 
-const rules = {
+// 当前选中的实体表单
+const selectedEntityForm = computed(() => {
+  if (modelData.value.formType !== BpmModelFormType.CUSTOM || !modelData.value.entityFormKey) {
+    return undefined
+  }
+  return props.entityFormList.find((form) => form.key === modelData.value.entityFormKey)
+})
+
+// 监听实体表单变化，自动回填自定义表单的提交/查看路由；
+// 实体表单未声明的路由会被清空（例如说 弹窗式新建入口没有提交路由），避免残留其他实体表单的路由被误用；清空后仍可手工填写
+watch(
+  () => modelData.value.entityFormKey,
+  (newKey) => {
+    if (!newKey) {
+      return
+    }
+    const entityForm = props.entityFormList.find((form) => form.key === newKey)
+    if (!entityForm) {
+      return
+    }
+    modelData.value.formCustomCreatePath = entityForm.createRoute ?? ''
+    modelData.value.formCustomViewPath = entityForm.viewRoute ?? ''
+  },
+  { immediate: true }
+)
+
+const rules = computed(() => ({
   formType: [{ required: true, message: '表单类型不能为空', trigger: 'blur' }],
   formId: [{ required: true, message: '流程表单不能为空', trigger: 'blur' }],
-  formCustomCreatePath: [{ required: true, message: '表单提交路由不能为空', trigger: 'blur' }],
-  formCustomViewPath: [{ required: true, message: '表单查看地址不能为空', trigger: 'blur' }]
-}
+  // 选中的实体表单未声明该路由时（例如说 弹窗式新建入口没有提交路由），允许为空
+  formCustomCreatePath:
+    selectedEntityForm.value && !selectedEntityForm.value.createRoute
+      ? []
+      : [{ required: true, message: '表单提交路由不能为空', trigger: 'blur' }],
+  formCustomViewPath:
+    selectedEntityForm.value && !selectedEntityForm.value.viewRoute
+      ? []
+      : [{ required: true, message: '表单查看地址不能为空', trigger: 'blur' }]
+}))
 
 /** 表单校验 */
 const validate = async () => {
