@@ -362,3 +362,42 @@ export function getDateRange(
     dayjs(endDate).endOf('d').format('YYYY-MM-DD HH:mm:ss')
   ]
 }
+
+/**
+ * 将日期选择器的起止数组转换为左右闭合的日期时间范围
+ *
+ * @param dateRange 开始日期、结束日期
+ * @returns 开始日期零点至结束日期最后一秒；范围无效时返回 undefined
+ */
+export function getDateRangeFromArray(
+  dateRange?: dayjs.ConfigType[]
+): [string, string] | undefined {
+  if (dateRange?.length !== 2) {
+    return undefined
+  }
+  const [beginDate, endDate] = dateRange
+  if (
+    beginDate === undefined ||
+    beginDate === null ||
+    beginDate === '' ||
+    endDate === undefined ||
+    endDate === null ||
+    endDate === '' ||
+    !dayjs(beginDate).isValid() ||
+    !dayjs(endDate).isValid()
+  ) {
+    return undefined
+  }
+  return getDateRange(beginDate, endDate)
+}
+
+/**
+ * 获取指定月份的开始时间、截止时间
+ *
+ * @param month 月份
+ * @return 月初零点至月末最后一秒的闭区间
+ */
+export function getMonthRange(month: dayjs.ConfigType): [string, string] {
+  const monthDate = dayjs(month)
+  return getDateRange(monthDate.startOf('M'), monthDate.endOf('M'))
+}
